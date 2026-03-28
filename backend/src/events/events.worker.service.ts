@@ -1,12 +1,14 @@
 import { Injectable,OnModuleInit } from "@nestjs/common";
 import { RedisService } from "../redis/redis.service";
 import { EventsService } from "./events.service"
+import { AnomalyService } from "src/anomaly/anomaly.service";
 
 @Injectable()
 export class EventsWorkerService implements OnModuleInit {
     constructor(
         private readonly redisService: RedisService,
         private readonly eventsService: EventsService,
+        private readonly anomalyService: AnomalyService,
     ) {}
 
     async onModuleInit() {
@@ -61,7 +63,16 @@ export class EventsWorkerService implements OnModuleInit {
                             value: Number(data.value),
                             type: data.type,
                         };
+                        const startTime = Date.now();
                         await this.eventsService.createEvent(normalizedEvent);
+                        const endTime = Date.now();
+                        
+                        const processingTime = endTime - startTime;
+                        const anomaly = this.anomalyService.detectAnomaly(processingTime);
+
+                        if(anomaly){
+                            console.log('Anomaly Deteceted',anomaly);
+                        }
                         await redis.xack('events-stream', 'events-group', id);
                     }
                 }
@@ -84,54 +95,4 @@ export class EventsWorkerService implements OnModuleInit {
         return result;
     }
 
-    private processingTimes: number[] = [];
-
-    private readonly windowSize = 10;
-
-    private readonly anamolyStdMultiplier = Number(
-        process.env.ANOMALY_STD_MULTIPLIER ?? 2
-    );
-
-    private detectAnamoly(processingTime : number){
-        this.processingTimes.push(processingTime);
-
-        if(this.processingTimes.length > this.windowSize){
-            this.processingTimes.shift();
-        }
-
-        if(this.processingTimes.length < this.windowSize){
-            return null;
-        }
-
-        const sum = this.processingTimes.reduce(
-            (total,value) => total+value,
-            0
-        );
-
-        const mean = sum/this.processingTimes.length;
-
-        const variance = this.processingTimes.reduce(
-            (total,value) => {
-                const diff = value-mean;
-                return total+(diff*diff);
-            }, 0) / this.processingTimes.length;
-
-        const standardDeviation = Math.sqrt(variance);
-
-        const threshold = mean + this.anamolyStdMultiplier * standardDeviation;
-
-        if(processingTime > threshold){
-            return{
-                processingTime,
-                mean,
-                standardDeviation,
-                threshold,
-                timestamp: new Date(),
-                severity: 
-                    processingTime > mean + 3 * standardDeviation ? 'HIGH' : 'MEDIUM',
-            };
-        }
-
-        return null;
-    }
 }
