@@ -19,6 +19,7 @@ export class AnomalyService {
         }
 
         if (this.processingTimes.length < this.windowSize) {
+            this.processingTimes.push(processingTime);
             return null;
         }
 
@@ -38,6 +39,12 @@ export class AnomalyService {
         const standardDeviation = Math.sqrt(variance);
 
         const threshold = mean + this.anamolyStdMultiplier * standardDeviation;
+        console.log({
+            processingTime,
+            mean,
+            standardDeviation,
+            threshold
+        });
 
         if (processingTime > threshold) {
             return {
@@ -49,6 +56,12 @@ export class AnomalyService {
                 severity:
                     processingTime > mean + 3 * standardDeviation ? 'HIGH' : 'MEDIUM',
             };
+        }
+
+        this.processingTimes.push(processingTime);
+
+        if (this.processingTimes.length > this.windowSize) {
+            this.processingTimes.shift();
         }
 
         return null;

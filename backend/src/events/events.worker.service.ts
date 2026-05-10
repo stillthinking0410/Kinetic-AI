@@ -2,6 +2,7 @@ import { Injectable,OnModuleInit } from "@nestjs/common";
 import { RedisService } from "../redis/redis.service";
 import { EventsService } from "./events.service"
 import { AnomalyService } from "src/anomaly/anomaly.service";
+import { AlertsService } from "src/alerts/alerts.service";
 
 @Injectable()
 export class EventsWorkerService implements OnModuleInit {
@@ -9,6 +10,7 @@ export class EventsWorkerService implements OnModuleInit {
         private readonly redisService: RedisService,
         private readonly eventsService: EventsService,
         private readonly anomalyService: AnomalyService,
+        private readonly alertsService: AlertsService
     ) {}
 
     async onModuleInit() {
@@ -71,7 +73,8 @@ export class EventsWorkerService implements OnModuleInit {
                         const anomaly = this.anomalyService.detectAnomaly(processingTime);
 
                         if(anomaly){
-                            console.log('Anomaly Deteceted',anomaly);
+                            console.log('Anomaly Detected', anomaly);
+                            this.alertsService.createAlert(anomaly);
                         }
                         await redis.xack('events-stream', 'events-group', id);
                     }

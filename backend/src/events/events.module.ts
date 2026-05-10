@@ -4,9 +4,11 @@ import {EventsController} from "./events.controller";
 import {PrismaModule} from "../prisma/prisma.module";
 import {RedisModule} from "../redis/redis.module";
 import { EventsWorkerService } from "./events.worker.service";
+import { AlertsModule } from "src/alerts/alerts.module";
+import { AnomalyModule } from "src/anomaly/anomaly.module";
 
 @Module({
-    imports : [PrismaModule,RedisModule],
+    imports : [PrismaModule,RedisModule,AlertsModule,AnomalyModule],
     providers : [EventsService,EventsWorkerService],
     controllers : [EventsController],
 })
