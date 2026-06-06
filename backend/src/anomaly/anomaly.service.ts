@@ -1,15 +1,17 @@
 import { Injectable } from "@nestjs/common";
-
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 
 export class AnomalyService {
+    constructor(private configService: ConfigService) {
+        this.windowSize = Number(this.configService.get('WINDOW_SIZE'));
+        this.anomalyStdMultiplier = Number(this.configService.get('ANOMALY_STD_MULTIPLIER'));
+    }
 
     private processingTimes: number[] = [];
-    private readonly windowSize = 10;
-    private readonly anamolyStdMultiplier = Number(
-        process.env.ANOMALY_STD_MULTIPLIER ?? 2
-    );
+    private readonly windowSize: number;
+    private readonly anomalyStdMultiplier: number;
 
     public detectAnomaly(processingTime: number) {
         this.processingTimes.push(processingTime);
@@ -38,7 +40,7 @@ export class AnomalyService {
 
         const standardDeviation = Math.sqrt(variance);
 
-        const threshold = mean + this.anamolyStdMultiplier * standardDeviation;
+        const threshold = mean + this.anomalyStdMultiplier * standardDeviation;
         console.log({
             processingTime,
             mean,
