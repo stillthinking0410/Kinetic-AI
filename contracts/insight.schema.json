@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Insight",
+  "type": "object",
+  "required": [
+    "insightId",
+    "sensorId",
+    "summary",
+    "recommendation",
+    "timestamp"
+  ],
+  "properties": {
+    "insightId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sensorId": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "recommendation": {
+      "type": "string"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}
